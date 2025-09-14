@@ -1,13 +1,20 @@
 {
-  "buildCommand": "npm run build",
+  "version": 2,
+  "buildCommand": "npm ci && npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "installCommand": "npm ci",
   "rewrites": [
     {
       "source": "/(.*)",
       "destination": "/index.html"
     }
   ],
+  "build": {
+    "env": {
+      "NODE_VERSION": "18.x"
+    }
+  },
   "env": {
     "VITE_SUPABASE_URL": "https://oweibvmxwjfajhpszdni.supabase.co"
   }
