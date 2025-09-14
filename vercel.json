@@ -1,9 +1,9 @@
 {
   "version": 2,
-  "buildCommand": "npm ci && npm run build",
+  "buildCommand": "npm install && npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
-  "installCommand": "npm ci",
+  "installCommand": "npm install --production=false",
   "rewrites": [
     {
       "source": "/(.*)",
@@ -12,7 +12,8 @@
   ],
   "build": {
     "env": {
-      "NODE_VERSION": "18.x"
+      "NODE_VERSION": "18.x",
+      "NPM_CONFIG_PRODUCTION": "false"
     }
   },
   "env": {
