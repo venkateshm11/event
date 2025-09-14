@@ -1,0 +1,4 @@
+
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpvdnVwemlla2xrcmdseXpjeXZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyMzQzMDMsImV4cCI6MjA3MjgxMDMwM30.2pvoV5RrSPk-5t-y-A07PGoZdz4aRWf4LHVqk-d0OIo
+VITE_SUPABASE_URL=https://zovupzieklkrglyzcyvb.supabase.co
+node_modules
