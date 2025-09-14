@@ -40,7 +40,9 @@ const AdminHeader: React.FC = () => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => alert('Notifications feature coming soon!')}
               className="relative p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-all duration-200"
+              title="Notifications"
             >
               <Bell className="h-6 w-6" />
               <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
@@ -50,7 +52,9 @@ const AdminHeader: React.FC = () => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => alert('Settings panel coming soon!')}
               className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-all duration-200"
+              title="Settings"
             >
               <Settings className="h-6 w-6" />
             </motion.button>

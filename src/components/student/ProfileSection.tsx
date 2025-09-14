@@ -88,7 +88,9 @@ const ProfileSection: React.FC = () => {
   };
 
   React.useEffect(() => {
-    generateStudentQR();
+    if (user) {
+      generateStudentQR();
+    }
   }, [user]);
 
   const tabs = [

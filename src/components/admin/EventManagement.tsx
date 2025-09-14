@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useData } from '../../contexts/DataContext';
-import { Plus, Edit, Trash2, Calendar, MapPin, Users, Clock } from 'lucide-react';
+import { Plus, Edit, Trash2, Calendar, MapPin, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const EventManagement: React.FC = () => {
@@ -18,6 +18,8 @@ const EventManagement: React.FC = () => {
     price: 100,
     image: ''
   });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
 
   const departments = ['Computer Science', 'Engineering', 'Cultural Committee', 'Sports', 'Business'];
 
@@ -33,8 +35,23 @@ const EventManagement: React.FC = () => {
       price: 100,
       image: ''
     });
+    setSelectedFile(null);
+    setImagePreview('');
     setShowForm(false);
     setEditingEvent(null);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleEdit = (event: any) => {
@@ -49,6 +66,7 @@ const EventManagement: React.FC = () => {
       price: event.price,
       image: event.image
     });
+    setImagePreview(event.image);
     setEditingEvent(event.id);
     setShowForm(true);
   };
@@ -56,10 +74,19 @@ const EventManagement: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    let imageUrl = formData.image;
+    
+    // If a file is selected, use the preview URL (in a real app, you'd upload to a server)
+    if (selectedFile && imagePreview) {
+      imageUrl = imagePreview;
+    } else if (!imageUrl) {
+      // Fallback to a default image
+      imageUrl = `https://images.pexels.com/photos/${Math.floor(Math.random() * 1000000)}/pexels-photo.jpeg`;
+    }
+    
     if (editingEvent) {
-      updateEvent(editingEvent, formData);
+      updateEvent(editingEvent, { ...formData, image: imageUrl });
     } else {
-      const imageUrl = formData.image || `https://images.pexels.com/photos/${Math.floor(Math.random() * 1000000)}/pexels-photo.jpeg`;
       addEvent({ ...formData, image: imageUrl });
     }
     
@@ -227,15 +254,25 @@ const EventManagement: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Image URL (Optional)
+                    Event Image (Optional)
                   </label>
-                  <input
-                    type="url"
-                    value={formData.image}
-                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200"
-                    placeholder="https://images.pexels.com/..."
-                  />
+                  <div className="space-y-4">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+                    />
+                    {imagePreview && (
+                      <div className="mt-4">
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex justify-end space-x-3">

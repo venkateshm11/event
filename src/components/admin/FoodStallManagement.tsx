@@ -4,7 +4,7 @@ import { Plus, Edit, Trash2, Star, DollarSign } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const FoodStallManagement: React.FC = () => {
-  const { foodStalls } = useData();
+  const { foodStalls, addFoodStall, updateFoodStall, deleteFoodStall } = useData();
   const [showForm, setShowForm] = useState(false);
   const [editingStall, setEditingStall] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -13,6 +13,8 @@ const FoodStallManagement: React.FC = () => {
     image: '',
     menu: [{ item: '', price: 0 }]
   });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
 
   const resetForm = () => {
     setFormData({
@@ -21,8 +23,23 @@ const FoodStallManagement: React.FC = () => {
       image: '',
       menu: [{ item: '', price: 0 }]
     });
+    setSelectedFile(null);
+    setImagePreview('');
     setShowForm(false);
     setEditingStall(null);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleEdit = (stall: any) => {
@@ -32,6 +49,7 @@ const FoodStallManagement: React.FC = () => {
       image: stall.image,
       menu: [...stall.menu]
     });
+    setImagePreview(stall.image);
     setEditingStall(stall.id);
     setShowForm(true);
   };
@@ -50,10 +68,39 @@ const FoodStallManagement: React.FC = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would update the food stalls data
-    resetForm();
+    
+    let imageUrl = formData.image;
+    
+    // If a file is selected, use the preview URL (in a real app, you'd upload to a server)
+    if (selectedFile && imagePreview) {
+      imageUrl = imagePreview;
+    } else if (!imageUrl) {
+      // Fallback to a default image
+      imageUrl = `https://images.pexels.com/photos/${Math.floor(Math.random() * 1000000)}/pexels-photo.jpeg`;
+    }
+    
+    const stallData = {
+      name: formData.name,
+      description: formData.description,
+      image: imageUrl,
+      menu: formData.menu,
+      location: 'Main Campus', // Default location
+      contactInfo: '', // Default contact info
+      isActive: true
+    };
+    
+    try {
+      if (editingStall) {
+        await updateFoodStall(editingStall, stallData);
+      } else {
+        await addFoodStall(stallData);
+      }
+      resetForm();
+    } catch (error) {
+      console.error('Error submitting food stall:', error);
+    }
   };
 
   return (
@@ -125,16 +172,25 @@ const FoodStallManagement: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Stall Image URL
+                    Stall Image (Optional)
                   </label>
-                  <input
-                    type="url"
-                    value={formData.image}
-                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200"
-                    placeholder="https://images.pexels.com/..."
-                    required
-                  />
+                  <div className="space-y-4">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
+                    />
+                    {imagePreview && (
+                      <div className="mt-4">
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div>
@@ -282,9 +338,13 @@ const FoodStallManagement: React.FC = () => {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => {
+                  onClick={async () => {
                     if (window.confirm(`Delete ${stall.name}?`)) {
-                      // In real app, would delete the stall
+                      try {
+                        await deleteFoodStall(stall.id);
+                      } catch (error) {
+                        console.error('Error deleting stall:', error);
+                      }
                     }
                   }}
                   className="flex items-center px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"

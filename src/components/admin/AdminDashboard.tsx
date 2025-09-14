@@ -5,12 +5,14 @@ import AttendanceTracking from './AttendanceTracking';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import FoodStallManagement from './FoodStallManagement';
 import AdminProfile from './AdminProfile';
+import QRScanner from './QRScanner';
 import { BarChart3, Calendar, QrCode, Utensils, Home, User } from 'lucide-react';
 
 type AdminTab = 'overview' | 'events' | 'attendance' | 'analytics' | 'food' | 'profile';
 
 const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
+  const [showQRScanner, setShowQRScanner] = useState(false);
 
   const tabs = [
     { id: 'overview' as AdminTab, label: 'Overview', icon: Home },
@@ -28,7 +30,21 @@ const AdminDashboard: React.FC = () => {
       case 'events':
         return <EventManagement />;
       case 'attendance':
-        return <AttendanceTracking />;
+        return (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-800">Attendance Tracking</h2>
+              <button
+                onClick={() => setShowQRScanner(true)}
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2"
+              >
+                <QrCode className="h-5 w-5" />
+                <span>Scan QR Code</span>
+              </button>
+            </div>
+            <AttendanceTracking />
+          </div>
+        );
       case 'analytics':
         return <AnalyticsDashboard />;
       case 'food':
@@ -79,6 +95,11 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* QR Scanner Modal */}
+      {showQRScanner && (
+        <QRScanner onClose={() => setShowQRScanner(false)} />
+      )}
     </div>
   );
 };

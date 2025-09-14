@@ -25,15 +25,30 @@ const AttendanceTracking: React.FC = () => {
     }
 
     try {
+      // Request camera permission first
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: 'environment' // Use back camera on mobile
+        } 
+      });
+      
+      // Stop the stream immediately as Html5QrcodeScanner will handle it
+      stream.getTracks().forEach(track => track.stop());
+      
       setShowScanner(true);
       
-      // Initialize QR scanner
+      // Initialize QR scanner with better configuration
       setTimeout(() => {
         const scanner = new Html5QrcodeScanner(
           "qr-reader",
           { 
             fps: 10, 
-            qrbox: { width: 250, height: 250 }
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0,
+            disableFlip: false,
+            videoConstraints: {
+              facingMode: 'environment'
+            }
           },
           false
         );
@@ -53,27 +68,47 @@ const AttendanceTracking: React.FC = () => {
                 return;
               }
 
-              const success = markAttendance(selectedEvent, data.userId);
-              if (success) {
-                setAttendanceList(prev => [...prev, data.userId]);
-                setScannedData(data);
-                showAlertMessage('✅ Attendance marked successfully!', 'success');
-              }
+              markAttendance(selectedEvent, data.userId).then(success => {
+                if (success) {
+                  setAttendanceList(prev => [...prev, data.userId]);
+                  setScannedData(data);
+                  showAlertMessage('✅ Attendance marked successfully!', 'success');
+                } else {
+                  showAlertMessage('❌ Failed to mark attendance', 'error');
+                }
+              }).catch(error => {
+                console.error('Attendance error:', error);
+                showAlertMessage('❌ Error marking attendance', 'error');
+              });
 
             } catch (error) {
               showAlertMessage('⚠️ Invalid QR code format', 'error');
             }
           },
           (error) => {
-            // Handle scanning errors silently
+            // Handle scanning errors with more specific messages
+            if (error.includes('NotAllowedError') || error.includes('Permission denied')) {
+              showAlertMessage('❌ Camera permission denied. Please allow camera access.', 'error');
+            } else if (error.includes('NotFoundError')) {
+              showAlertMessage('❌ No camera found on this device.', 'error');
+            }
           }
         );
 
         scannerRef.current = scanner;
       }, 100);
 
-    } catch (error) {
-      showAlertMessage('❌ Camera access denied. Please allow camera permission.', 'error');
+    } catch (error: any) {
+      console.error('Camera access error:', error);
+      if (error.name === 'NotAllowedError') {
+        showAlertMessage('❌ Camera permission denied. Please allow camera access and try again.', 'error');
+      } else if (error.name === 'NotFoundError') {
+        showAlertMessage('❌ No camera found on this device.', 'error');
+      } else if (error.name === 'NotSupportedError') {
+        showAlertMessage('❌ Camera not supported on this device.', 'error');
+      } else {
+        showAlertMessage('❌ Unable to access camera. Please check your browser settings.', 'error');
+      }
     }
   };
 
@@ -83,6 +118,50 @@ const AttendanceTracking: React.FC = () => {
     }
     setShowScanner(false);
     setScannedData(null);
+  };
+
+  const exportAttendance = (eventId: string) => {
+    const eventDetails = events.find(e => e.id === eventId);
+    const attendance = getEventAttendance();
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    
+    interface AttendanceRecord {
+      Name: string;
+      'Roll Number': string;
+      Email: string;
+      'Marked At': string;
+    }
+    
+    const attendanceData: AttendanceRecord[] = attendance.map((userId: string) => {
+      const user = users.find((u: any) => u.id === userId);
+      return {
+        Name: user?.name || 'Unknown',
+        'Roll Number': user?.rollNumber || 'N/A',
+        Email: user?.email || 'N/A',
+        'Marked At': new Date().toLocaleString()
+      };
+    });
+
+    const csvContent = [
+      ['Event', eventDetails?.title || 'Unknown Event'],
+      ['Date', eventDetails?.date || 'N/A'],
+      ['Total Present', attendance.length.toString()],
+      [''],
+      ['Name', 'Roll Number', 'Email', 'Marked At'],
+      ...attendanceData.map(row => [row.Name, row['Roll Number'], row.Email, row['Marked At']])
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `attendance-${eventDetails?.title || 'event'}-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    showAlertMessage('✅ Attendance exported successfully!', 'success');
   };
 
   const getEventAttendance = () => {
@@ -145,9 +224,9 @@ const AttendanceTracking: React.FC = () => {
                 <h3 className="text-xl font-bold text-gray-800">Scan QR Code</h3>
                 <button
                   onClick={stopScanning}
-                  className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                  className="text-gray-500 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-100 transition-colors"
                 >
-                  <X className="h-5 w-5" />
+                  <X className="h-6 w-6" />
                 </button>
               </div>
               

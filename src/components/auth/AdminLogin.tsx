@@ -37,7 +37,16 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onBack, onRegister, showAlert }
       
       showAlert(result.message, result.success ? 'success' : 'error');
     } catch (error) {
-      showAlert('❌ Login failed. Please try again.', 'error');
+      const errorMessage = error instanceof Error ? error.message : 'Login failed. Please try again.';
+      
+      // Check if it's a timeout error
+      if (errorMessage.includes('timeout')) {
+        showAlert('⏱️ Login timeout. Please try again.', 'error');
+        // Clear the form after timeout
+        setFormData({ email: '', password: '' });
+      } else {
+        showAlert('❌ Login failed. Please try again.', 'error');
+      }
     }
 
     setIsLoading(false);
