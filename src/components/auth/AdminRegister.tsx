@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Eye, EyeOff, ArrowLeft, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { supabase } from '../../lib/supabase';
 
 interface AdminRegisterProps {
   onBack: () => void;
@@ -235,42 +234,4 @@ interface RegisterFormData {
   password: string;
   confirmPassword: string;
   enableOTP: boolean;
-}
-
-interface RegisterResult {
-  success: boolean;
-  message?: string;
-}
-
-export async function register(
-  formData: RegisterFormData,
-  role: string = 'admin'
-): Promise<RegisterResult> {
-  // Create user in Supabase Auth
-  const { data, error } = await supabase.auth.signUp({
-    email: formData.email,
-    password: formData.password,
-    options: {
-      data: {
-        name: formData.name,
-        mobileNumber: formData.mobileNumber,
-        role,
-        enableOTP: formData.enableOTP
-      }
-    }
-  });
-
-  if (error) {
-    return { success: false, message: error.message };
-  }
-
-  // Optionally, insert into your 'admins' table
-  // const { error: dbError } = await supabase.from('admins').insert([
-  //   { name: formData.name, email: formData.email, mobileNumber: formData.mobileNumber }
-  // ]);
-  // if (dbError) {
-  //   return { success: false, message: dbError.message };
-  // }
-
-  return { success: true };
 }
